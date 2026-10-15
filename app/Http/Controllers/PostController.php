@@ -7,12 +7,22 @@ use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    public function index()
-    {
-        $posts = Post::with(['images', 'comments'])->get();
+public function index(Request $request)
+{
+    $search = $request->query('search');
 
-        return response()->json($posts);
-    }
+    $posts = Post::with(['images', 'comments'])
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        })
+        ->paginate($request->query('per_page', 10));
+
+    return response()->json($posts);
+}
+
 
     public function store(Request $request)
     {
@@ -51,15 +61,27 @@ class PostController extends Controller
         );
     }
 
-    public function like(Post $post)
+    
+    public function like(Request $request, Post $post)
     {
-        $post->increment('likes_count');
+        $like = $post->likes()->firstOrCreate([
+          'user_id' => $request->user()->id,
+        ]);
+
+        if ($like->wasRecentlyCreated) {
+            $post->increment('likes_count');
+
+            return response()->json([
+                'message' => 'Like registrado correctamente.',
+                'likes_count' => $post->fresh()->likes_count,
+            ]);
+        }
 
         return response()->json([
-            'message' => 'Post liked',
-            'likes_count' => $post->likes_count,
+            'message' => 'Ya has dado like a esta publicación.',
+            'likes_count' => $post->fresh()->likes_count,
         ]);
-    }
+    }   
 
     public function destroy(Post $post)
     {

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Notifications\NewCommentNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class CommentController extends Controller
 {
@@ -18,6 +20,11 @@ class CommentController extends Controller
             'author' => $request->author,
             'content' => $request->content,
         ]);
+
+        $comment->load('post');
+
+        Notification::route('mail', 'prueba@example.com')
+            ->notify(new NewCommentNotification($comment));
 
         return response()->json($comment, 201);
     }
