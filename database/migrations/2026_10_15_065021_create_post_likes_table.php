@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Impide que un usuario dé like dos veces al mismo post.
+            // Impide que un usuario de like dos veces al mismo post.
             $table->unique(['post_id', 'user_id']);
         });
     }

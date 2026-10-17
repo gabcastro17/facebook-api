@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    ports:
+      - "10000:10000"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: http://localhost:10000
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: facebook_api
+      DB_USERNAME: facebook_user
+      DB_PASSWORD: local_password_change_me
+      RUN_MIGRATIONS: "true"
+      LOG_CHANNEL: stderr
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: facebook_api
+      POSTGRES_USER: facebook_user
+      POSTGRES_PASSWORD: local_password_change_me
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facebook_user -d facebook_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
